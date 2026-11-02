@@ -19,6 +19,7 @@ const MENSAGENS: Record<string, string> = {
 const formatoData = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
   timeStyle: "short",
+  timeZone: "America/Sao_Paulo",
 });
 
 export function ListaTarefas({
@@ -54,12 +55,12 @@ export function ListaTarefas({
   const [deletandoId, setDeletandoId] = useState<string | null>(null);
   const deletar = trpc.tarefa.deletar.useMutation({
     onMutate: ({ id }) => setDeletandoId(id),
-    onSuccess: async () => {
-      setAviso({ tipo: "sucesso", texto: "Tarefa excluída." });
+    onSuccess: () => setAviso({ tipo: "sucesso", texto: "Tarefa excluída." }),
+    onError: (err) => setAviso({ tipo: "erro", texto: mensagemDeErro(err) }),
+    onSettled: async () => {
+      setDeletandoId(null);
       await utils.tarefa.listar.invalidate();
     },
-    onError: (err) => setAviso({ tipo: "erro", texto: mensagemDeErro(err) }),
-    onSettled: () => setDeletandoId(null),
   });
 
   const sentinela = useRef<HTMLDivElement>(null);
@@ -112,7 +113,7 @@ export function ListaTarefas({
               <div className="card-conteudo">
                 <h2>{t.titulo}</h2>
                 {t.descricao && <p>{t.descricao}</p>}
-                <time dateTime={t.dataCriacao.toISOString()} suppressHydrationWarning>
+                <time dateTime={t.dataCriacao.toISOString()}>
                   Criada em {formatoData.format(t.dataCriacao)}
                   {t.dataAtualizacao && " · editada"}
                 </time>

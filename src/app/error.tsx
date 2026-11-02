@@ -1,6 +1,6 @@
 "use client";
 
-export default function Error({ reset }: { error: Error; reset: () => void }) {
+export default function ErrorPage({ reset }: { error: Error; reset: () => void }) {
   return (
     <div className="vazio">
       <h1>Ops, algo deu errado</h1>

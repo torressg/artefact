@@ -27,34 +27,41 @@ function buscarOuFalhar(id: string): Tarefa {
   return tarefa;
 }
 
+function compararPorMaisRecente(a: Tarefa, b: Tarefa) {
+  const diff = b.dataCriacao.getTime() - a.dataCriacao.getTime();
+  if (diff !== 0) return diff;
+  return a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
+}
+
 export const tarefaRouter = router({
   listar: publicProcedure
     .input(
       z.object({
         limit: z.number().int().min(1).max(50).default(10),
-        cursor: z.string().nullish(),
+        cursor: z.object({ data: z.number(), id: z.string() }).nullish(),
       }),
     )
     .query(({ input }) => {
-      const ordenadas = [...tarefas.values()].sort(
-        (a, b) => b.dataCriacao.getTime() - a.dataCriacao.getTime(),
-      );
+      const ordenadas = [...tarefas.values()].sort(compararPorMaisRecente);
+      const cursor = input.cursor;
 
-      let inicio = 0;
-      if (input.cursor) {
-        const idx = ordenadas.findIndex((t) => t.id === input.cursor);
-        if (idx === -1) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Cursor inválido" });
-        }
-        inicio = idx + 1;
-      }
+      const restantes = cursor
+        ? ordenadas.filter(
+            (t) =>
+              t.dataCriacao.getTime() < cursor.data ||
+              (t.dataCriacao.getTime() === cursor.data && t.id < cursor.id),
+          )
+        : ordenadas;
 
-      const items = ordenadas.slice(inicio, inicio + input.limit);
-      const temMais = inicio + input.limit < ordenadas.length;
+      const items = restantes.slice(0, input.limit);
+      const ultima = items[items.length - 1];
 
       return {
         items,
-        nextCursor: temMais ? items[items.length - 1].id : null,
+        nextCursor:
+          restantes.length > input.limit
+            ? { data: ultima.dataCriacao.getTime(), id: ultima.id }
+            : null,
         total: ordenadas.length,
       };
     }),
