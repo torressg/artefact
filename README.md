@@ -4,7 +4,13 @@ Desafio técnico: um CRUD de tarefas com Next.js 15 e tRPC, guardando tudo em me
 
 ## Rodando
 
-Precisa de Node 20.
+Com Docker:
+
+```bash
+docker compose up --build
+```
+
+Ou direto com Node 20:
 
 ```bash
 npm install
