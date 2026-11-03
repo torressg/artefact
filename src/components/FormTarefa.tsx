@@ -1,5 +1,7 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
+import { getQueryKey } from "@trpc/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,7 +24,7 @@ function validarTitulo(titulo: string) {
 
 export function FormTarefa({ tarefa }: Props) {
   const router = useRouter();
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
   const editando = Boolean(tarefa);
 
   const [titulo, setTitulo] = useState(tarefa?.titulo ?? "");
@@ -32,8 +34,8 @@ export function FormTarefa({ tarefa }: Props) {
 
   const erroTitulo = tocado ? validarTitulo(titulo) : null;
 
-  const aoSalvar = async () => {
-    await utils.tarefa.listar.invalidate();
+  const aoSalvar = () => {
+    queryClient.removeQueries({ queryKey: getQueryKey(trpc.tarefa.listar) });
     router.push(`/?msg=${editando ? "atualizada" : "criada"}`);
   };
   const aoFalhar = (err: unknown) => setErroServidor(mensagemDeErro(err));
